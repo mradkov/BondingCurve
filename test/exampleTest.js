@@ -14,70 +14,71 @@
  *  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  *  PERFORMANCE OF THIS SOFTWARE.
  */
-const Ae = require('@aeternity/aepp-sdk').Universal;
+
+const { Universal, MemoryAccount, Node } = require('@aeternity/aepp-sdk');
+const BONDING_CURVE_CONTRACT = utils.readFileRelative(
+  './contracts/Bond.aes',
+  'utf-8',
+);
 
 const config = {
-    host: "http://localhost:3001/",
-    internalHost: "http://localhost:3001/internal/",
-    gas: 200000,
-    ttl: 55,
-    compilerUrl: 'https://compiler.aepps.com'
+  url: 'http://localhost:3001/',
+  internalUrl: 'http://localhost:3001/',
+  compilerUrl: 'http://localhost:3080',
 };
 
 describe('Bonding Curve Contract', () => {
+  let client, contract;
 
-    let owner, contract, receiverPublicKey;
-
-    before(async () => {
-        const ownerKeyPair = wallets[0];
-        owner = await Ae({
-            url: config.host,
-            internalUrl: config.internalHost,
-            keypair: ownerKeyPair,
-            nativeMode: true,
-            networkId: 'ae_devnet',
-            compilerUrl: config.compilerUrl
-        });
-
+  before(async () => {
+    client = await Universal({
+      nodes: [
+        {
+          name: 'devnetNode',
+          instance: await Node(config),
+        },
+      ],
+      accounts: [
+        MemoryAccount({
+          keypair: wallets[0],
+        }),
+      ],
+      networkId: 'ae_devnet',
+      compilerUrl: config.compilerUrl,
     });
+  });
 
-    it('Deploying Bonding Curve Contract', async () => {
-        let contractSource = utils.readFileRelative('./contracts/Bond.aes', "utf-8"); // Read the aes file
+  it('Deploying Bond Contract', async () => {
+    contract = await client.getContractInstance(BONDING_CURVE_CONTRACT);
+    const init = await contract.methods.init();
+    assert.equal(init.result.returnType, 'ok');
+  });
 
-        receiverPublicKey = wallets[1].publicKey;
 
-        contract = await owner.getContractInstance(contractSource);
-        let deploy = await contract.deploy([receiverPublicKey, 1000]);
+//   it('Bonding Curve Contract Spend Successful', async () => {
+//     const receiverBalanceInitial = await owner.balance(receiverPublicKey);
 
-        assert.equal(deploy.deployInfo.result.returnType, 'ok', 'Could not deploy Bonding Curve Contract');
-    });
+//     let res;
 
-    it('Bonding Curve Contract Spend Successful', async () => {
-        const receiverBalanceInitial = await owner.balance(receiverPublicKey);
+//     res = await contract.call('buy', [], { amount: 1000 });
+//     console.log(await res.decode());
 
-        let res
-        
+//     res = await contract.call('buy', [], { amount: 1000 });
+//     console.log(await res.decode());
 
-        res = await contract.call('buy', [], {amount: 1000});
-        console.log(await res.decode())
+//     res = await contract.call('my_balance_pretty', [], { amount: 0 });
+//     console.log(await res.decode());
 
-        res = await contract.call('buy', [], {amount: 1000});
-        console.log(await res.decode())
+//     res = await contract.call('sell', [7], { amount: 0 });
+//     console.log(await res.decode());
 
-        res = await contract.call('my_balance_pretty', [], {amount: 0});
-        console.log(await res.decode())
+//     res = await contract.call('sell', [1], { amount: 0 });
+//     console.log(await res.decode());
 
-        res = await contract.call('sell', [7], {amount: 0});
-        console.log(await res.decode())
+//     res = await contract.call('my_balance_pretty', [], { amount: 0 });
+//     console.log(await res.decode());
 
-        res = await contract.call('sell', [1], {amount: 0});
-        console.log(await res.decode())
-
-        res = await contract.call('my_balance_pretty', [], {amount: 0});
-        console.log(await res.decode())
-
-        //const receiverBalanceAfterwards = await owner.balance(receiverPublicKey);
-        //assert.equal(parseInt(receiverBalanceInitial) + 1000, parseInt(receiverBalanceAfterwards)); // don't use parseInt, use a library like bignumber.js
-    });
-
+//     //const receiverBalanceAfterwards = await owner.balance(receiverPublicKey);
+//     //assert.equal(parseInt(receiverBalanceInitial) + 1000, parseInt(receiverBalanceAfterwards)); // don't use parseInt, use a library like bignumber.js
+//   });
 });
