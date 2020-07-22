@@ -1,172 +1,173 @@
 namespace Frac =
 
-		function gcd(a : int, b : int) =
-				if (b == 0) a else gcd(b, a mod b)
+	function gcd(a : int, b : int) =
+		if (b == 0) a else gcd(b, a mod b)
 
-		function abs_int(a : int) = if (a < 0) -a else a
+	function abs_int(a : int) = if (a < 0) -a else a
 
-		datatype frac = Pos(int, int) | Zero | Neg(int, int)
+	datatype frac = Pos(int, int) | Zero | Neg(int, int)
 
-		function is_sane(f) = switch(f)
-				Pos(n, d) => n > 0 && d > 0
-				Zero => true
-				Neg(n, d) => n > 0 && d > 0
+	function is_sane(f) = switch(f)
+		Pos(n, d) => n > 0 && d > 0
+		Zero => true
+		Neg(n, d) => n > 0 && d > 0
 
-		function num(f) = switch(f)
-				Pos(n, _) => n
-				Neg(n, _) => -n
-				Zero      => 0
+	function num(f) = switch(f)
+		Pos(n, _) => n
+		Neg(n, _) => -n
+		Zero      => 0
 
-		function den(f) = switch(f)
-				Pos(_, d) => d
-				Neg(_, d) => d
-				Zero      => 1
+	function den(f) = switch(f)
+		Pos(_, d) => d
+		Neg(_, d) => d
+		Zero      => 1
 
-		function to_pair(f) = switch(f)
-				Pos(n, d) => (n, d)
-				Neg(n, d) => (-n, d)
-				Zero      => (0, 1)
+	function to_pair(f) = switch(f)
+		Pos(n, d) => (n, d)
+		Neg(n, d) => (-n, d)
+		Zero      => (0, 1)
 
-		function sign(f) = switch(f)
-				Pos(_, _) => 1
-				Neg(_, _) => -1
-				Zero      => 0
+	function sign(f) = switch(f)
+		Pos(_, _) => 1
+		Neg(_, _) => -1
+		Zero      => 0
 
-		function to_str(f) = switch(f)
-				Pos(n, d) => String.concat(Int.to_str(n), if (d == 1) "" else String.concat("/", Int.to_str(d)))
-				Pos(n, d) => String.concat(String.concat("-", Int.to_str(n)), if (d == 1) "" else String.concat("/", Int.to_str(d)))
-				Zero      => "0"
+	function to_str(f) = switch(f)
+		Pos(n, d) => String.concat(Int.to_str(n), if (d == 1) "" else String.concat("/", Int.to_str(d)))
+		Pos(n, d) => String.concat(String.concat("-", Int.to_str(n)), if (d == 1) "" else String.concat("/", Int.to_str(d)))
+		Zero      => "0"
 
-		function simplify(f : frac) =
-				let cd = gcd(num(f), den(f))
-				switch(f)
-						Neg(n, d) => Neg(n / cd, d / cd)
-						Zero  => Zero
-						Pos(n, d)  => Pos(n / cd, d / cd)
+	function simplify(f : frac) =
+			let cd = gcd(num(f), den(f))
+			switch(f)
+					Neg(n, d) => Neg(n / cd, d / cd)
+					Zero  => Zero
+					Pos(n, d)  => Pos(n / cd, d / cd)
 
-		function make_frac(n : int, d : int): frac =
-				if (d == 0) abort("Division by zero")
-				elif (n == 0) Zero
-				elif ((n < 0) == (d < 0)) simplify(Pos(abs_int(n), abs_int(d)))
-				else simplify(Neg(abs_int(n), abs_int(d)))
+	function make_frac(n : int, d : int): frac =
+			if (d == 0) abort("Division by zero")
+			elif (n == 0) Zero
+			elif ((n < 0) == (d < 0)) simplify(Pos(abs_int(n), abs_int(d)))
+			else simplify(Neg(abs_int(n), abs_int(d)))
 
-		function eq(a, b) = num(a) * den(b) == num(b) * den(a)
+	function eq(a, b) = num(a) * den(b) == num(b) * den(a)
 
-		function neq(a, b) = num(a) * den(b) != num(b) * den(a)
+	function neq(a, b) = num(a) * den(b) != num(b) * den(a)
 
-		function geq(a, b) = num(a) * den(b) >= num(b) * den(a)
+	function geq(a, b) = num(a) * den(b) >= num(b) * den(a)
 
-		function leq(a, b) = num(a) * den(b) =< num(b) * den(a)
+	function leq(a, b) = num(a) * den(b) =< num(b) * den(a)
 
-		function gt(a, b) = num(a) * den(b) > num(b) * den(a)
+	function gt(a, b) = num(a) * den(b) > num(b) * den(a)
 
-		function lt(a, b) = num(a) * den(b) < num(b) * den(a)
+	function lt(a, b) = num(a) * den(b) < num(b) * den(a)
 
-		function min(a, b) = if (leq(a, b)) a else b 
+	function min(a, b) = if (leq(a, b)) a else b 
 
-		function max(a, b) = if (geq(a, b)) a else b 
+	function max(a, b) = if (geq(a, b)) a else b 
 
-		function abs(f) = switch(f)
-				Pos(n, d) => Pos(n, d)
-				Zero      => Zero
-				Neg(n, d) => Pos(n, d)
+	function abs(f) = switch(f)
+		Pos(n, d) => Pos(n, d)
+		Zero      => Zero
+		Neg(n, d) => Pos(n, d)
 
-		function from_int(n : int) = make_frac(n, 1)
+	function from_int(n : int) = make_frac(n, 1)
 
-		function floor(f) = switch(f)
-				Pos(n, d) => n / d
-				Zero      => 0
-				Neg(n, d) => -(n + d - 1) / d
+	function floor(f) = switch(f)
+		Pos(n, d) => n / d
+		Zero      => 0
+		Neg(n, d) => -(n + d - 1) / d
 
-		function ceil(f) = switch(f)
-				Pos(n, d) => (n + d - 1) / d
-				Zero      => 0
-				Neg(n, d) => -n / d
-		
-		function round_to_zero(f) = switch(f)
-				Pos(n, d) => n / d
-				Zero      => 0
-				Neg(n, d) => n / d
+	function ceil(f) = switch(f)
+		Pos(n, d) => (n + d - 1) / d
+		Zero      => 0
+		Neg(n, d) => -n / d
+	
+	function round_to_zero(f) = switch(f)
+		Pos(n, d) => n / d
+		Zero      => 0
+		Neg(n, d) => n / d
 
-		function round_from_zero(f) = switch(f)
-				Pos(n, d) => (n + d - 1) / d
-				Zero      => 0
-				Neg(n, d) => -(n + d - 1) / d
+	function round_from_zero(f) = switch(f)
+		Pos(n, d) => (n + d - 1) / d
+		Zero      => 0
+		Neg(n, d) => -(n + d - 1) / d
 
-		function add(a : frac, b : frac) = make_frac(num(a) * den(b) + num(b) * den(a), den(a) * den(b))
+	function add(a : frac, b : frac) = make_frac(num(a) * den(b) + num(b) * den(a), den(a) * den(b))
 
-		function neg(a : frac) = switch(a)
-				Neg(n, d) => Pos(n, d)
-				Zero      => Zero
-				Pos(n, d) => Neg(n, d)
+	function neg(a : frac) = switch(a)
+		Neg(n, d) => Pos(n, d)
+		Zero      => Zero
+		Pos(n, d) => Neg(n, d)
 
-		function sub(a : frac, b : frac) = add(a, neg(b))
+	function sub(a : frac, b : frac) = add(a, neg(b))
 
-		function inv(a : frac) = switch(a)
-				Neg(n, d) => Neg(d, n)
-				Zero      => abort("Inversion of zero")
-				Pos(n, d) => Pos(d, n)
+	function inv(a : frac) = switch(a)
+		Neg(n, d) => Neg(d, n)
+		Zero      => abort("Inversion of zero")
+		Pos(n, d) => Pos(d, n)
 
-		function mul(a : frac, b : frac) = make_frac(num(a) * num(b), den(a) * den(b))
+	function mul(a : frac, b : frac) = make_frac(num(a) * num(b), den(a) * den(b))
 
-		function div(a : frac, b : frac) = mul(a, inv(b))
+	function div(a : frac, b : frac) = mul(a, inv(b))
 
-		function int_exp_go(b : frac, e : int) =
-						if (e == 0) from_int(1)
-						elif (e == 1) b
-						else
-								let half = int_exp_go(b, e / 2)
-								if (e mod 2 == 1) mul(mul(half, half), b)
-								else mul(half, half)
-		function int_exp(b : frac, e : int): frac =
-				if (sign(b) == 0 && e == 0) abort("Zero to the zero exponentation")
-				elif (e < 0) inv(int_exp_go(b, -e))
-				else int_exp_go(b, e)
+	function int_exp_go(b : frac, e : int) =
+		if (e == 0) from_int(1)
+		elif (e == 1) b
+		else
+			let half = int_exp_go(b, e / 2)
+			if (e mod 2 == 1) mul(mul(half, half), b)
+			else mul(half, half)
+
+	function int_exp(b : frac, e : int): frac =
+		if (sign(b) == 0 && e == 0) abort("Zero to the zero exponentation")
+		elif (e < 0) inv(int_exp_go(b, -e))
+		else int_exp_go(b, e)
 
 //////// String
 
-		function concatList(l) = switch(l)
-				[] => ""
-				s::rest => String.concat(s, concatList(rest))
+	function concatList(l) = switch(l)
+		[] => ""
+		s::rest => String.concat(s, concatList(rest))
 
 //////// Functional
 
-		function compose(f : 'b => 'c, g : 'a => 'b) : 'a => 'c = (x) => f(g(x))
+	function compose(f : 'b => 'c, g : 'a => 'b) : 'a => 'c = (x) => f(g(x))
 
-		function curry2(f) = (a) => ((b) => f(a, b))
-		function curry3(f) = (a) => ((b) => ((c) => f(a, b, c)))
+	function curry2(f) = (a) => ((b) => f(a, b))
+	function curry3(f) = (a) => ((b) => ((c) => f(a, b, c)))
 
-		function iter(n : int, f : 'a => 'a, start : 'a) =
-				if (n < 0) abort("Negative iteration")
-				elif (n == 0) start
-				else f(iter((n-1), f, start))
+	function iter(n : int, f : 'a => 'a, start : 'a) =
+		if (n < 0) abort("Negative iteration")
+		elif (n == 0) start
+		else f(iter((n-1), f, start))
 
 /////// Approx
 
-		function power(base : frac, exp : frac, max_err : frac): frac =
-				if (sign(max_err) == 0) abort("Negative error") 
-				else root(int_exp(base, num(exp)), den(exp), max_err)
+	function power(base : frac, exp : frac, max_err : frac): frac =
+		if (sign(max_err) == 0) abort("Negative error") 
+		else root(int_exp(base, num(exp)), den(exp), max_err)
 
-		function root(base : frac, s : int, max_err : frac): frac =
-				if (s == 1) base
-				elif (s < 0) root(inv(base), -s, max_err)
-				elif (s == 0) abort("Zero root")
-				elif ((s mod 2 == 0) && (Frac.sign(base) < 0)) abort("Even root of negative number")
-				else
-					let left = Frac.min(Frac.neg(Frac.abs(base)), Frac.from_int(-1))
-					let right = Frac.max(Frac.abs(base), Frac.from_int(1))
-					bin_search((guess) => sub(int_exp(guess, s), base), left, right, max_err)
+	function root(base : frac, s : int, max_err : frac): frac =
+		if (s == 1) base
+		elif (s < 0) root(inv(base), -s, max_err)
+		elif (s == 0) abort("Zero root")
+		elif ((s mod 2 == 0) && (Frac.sign(base) < 0)) abort("Even root of negative number")
+		else
+			let left = Frac.min(Frac.neg(Frac.abs(base)), Frac.from_int(-1))
+			let right = Frac.max(Frac.abs(base), Frac.from_int(1))
+			bin_search((guess) => sub(int_exp(guess, s), base), left, right, max_err)
 
-		/**
-		 * @param rate Function that describes whether the guess is too low or too big. Negative rate will raise guess,
-									 positive will lower. If rate is between [-threshold, threshold] than the value is considered correct.
-		 */
-		function bin_search(rate : frac => frac, from : frac, to : frac, threshold : frac): frac =
-				let mid = add(div(from, from_int(2)), div(to, from_int(2)))
-				let r = rate(mid)
-				if (lt(r, neg(threshold))) bin_search(rate, mid, to, threshold)
-				elif (gt(r, threshold)) bin_search(rate, from, mid, threshold)
-				else mid
+	/**
+		* @param rate Function that describes whether the guess is too low or too big. Negative rate will raise guess,
+									positive will lower. If rate is between [-threshold, threshold] than the value is considered correct.
+		*/
+	function bin_search(rate : frac => frac, from : frac, to : frac, threshold : frac): frac =
+		let mid = add(div(from, from_int(2)), div(to, from_int(2)))
+		let r = rate(mid)
+		if (lt(r, neg(threshold))) bin_search(rate, mid, to, threshold)
+		elif (gt(r, threshold)) bin_search(rate, from, mid, threshold)
+		else mid
 
 contract Bond =
 
@@ -176,28 +177,27 @@ contract Bond =
 		, reserve_ratio : Frac.frac // should be immutable
 		}
 
-	public function init() : state =
+	entrypoint init() : state =
 		{balances = {}, pool_reserve = Frac.from_int(0), reserve_ratio = Frac.make_frac(1, 4)}
 
 
-	function max_error() = Frac.make_frac(1, 10)
+	entrypoint max_error() = Frac.make_frac(1, 10)
 
-
-	private function snd(tuple : ('a, 'b)) : 'b = switch(tuple)
+	function snd(tuple : ('a * 'b)) : 'b = switch(tuple)
 		(_, x) => x
 
 
-	private function foldr(f : (('a, 'b) => 'b), z: 'b, l : list('a)) : 'b =
+	function foldr(f : (('a, 'b) => 'b), z: 'b, l : list('a)) : 'b =
 		switch(l)
 			[] => z
 			e :: l' => f(e, foldr(f, z, l'))
 
-	function ziom() = Frac.to_str(Frac.power(Frac.sub(Frac.make_frac(83188442530125,8796093022208), Frac.from_int(2000)), Frac.from_int(4), max_error()))
+	entrypoint ziom() = Frac.to_str(Frac.power(Frac.sub(Frac.make_frac(83188442530125,8796093022208), Frac.from_int(2000)), Frac.from_int(4), max_error()))
 
-	private function my_balance() = Map.lookup_default(Call.caller, state.balances, Frac.from_int(0))
-	function my_balance_pretty() = Frac.to_str(Map.lookup_default(Call.caller, state.balances, Frac.from_int(0)))
+	function my_balance() = Map.lookup_default(Call.caller, state.balances, Frac.from_int(0))
+	entrypoint my_balance_pretty() = Frac.to_str(Map.lookup_default(Call.caller, state.balances, Frac.from_int(0)))
 
-	public stateful function buy() =
+	stateful entrypoint buy() =
 		if (Call.value =< 0)
 			abort("Negative prices are not supported")
 		else
@@ -209,7 +209,7 @@ contract Bond =
 			Frac.round_to_zero(tokens_mint)
 
 
-	public stateful function sell(amount) =
+	stateful entrypoint sell(amount) =
 		let balance = my_balance()
 		if (Frac.lt(balance, Frac.from_int(amount)))
 			abort(Frac.concatList(["Not enough tokens: ", Frac.to_str(balance), " < ", Int.to_str(amount), " "]))
@@ -224,15 +224,12 @@ contract Bond =
 							 })
 			Frac.round_to_zero(price)
 
-
-	private function get_supply(): Frac.frac =
+	function get_supply(): Frac.frac =
 		foldr((a, b) => Frac.add(snd(a), b), Frac.from_int(0), Map.to_list(state.balances))
-
 
 	function get_int_supply(): int = Frac.round_to_zero(get_supply())
 
-
-	private function buy_amount(supply: Frac.frac, pool_reserve: Frac.frac, rratio: Frac.frac, price: Frac.frac) : Frac.frac =
+	function buy_amount(supply: Frac.frac, pool_reserve: Frac.frac, rratio: Frac.frac, price: Frac.frac) : Frac.frac =
 		if (Frac.sign(supply) < 0) abort("Negtive supply in buy")
 		elif (Frac.sign(pool_reserve) < 0) abort("Negtive pool_reserve in buy")
 		elif (Frac.sign(rratio) =< 0 || Frac.geq(rratio, Frac.from_int(100))) abort("reserve_ratio not in (0,100) in buy")
@@ -257,8 +254,7 @@ contract Bond =
 					)
 				)
 
-
-	private function sell_price(supply: Frac.frac, pool_reserve: Frac.frac, rratio: Frac.frac, amount: Frac.frac) : Frac.frac =
+	function sell_price(supply: Frac.frac, pool_reserve: Frac.frac, rratio: Frac.frac, amount: Frac.frac) : Frac.frac =
 		if (Frac.sign(supply) < 0) abort("Negtive supply in sell")
 		elif (Frac.sign(pool_reserve) < 0) abort("Negtive pool_reserve in sell")
 		elif (Frac.sign(rratio) =< 0 || Frac.geq(rratio, Frac.from_int(100))) abort("reserve_ratio not in (0,100) in sell")
