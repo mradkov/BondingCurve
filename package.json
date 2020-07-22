@@ -1,16 +1,18 @@
 {
-  "name": "forgae-project",
+  "name": "sophia-bonding-curve",
   "version": "1.0.0",
-  "description": "This is the default package.json generated for your project",
+  "description": "Sophia Bonding Curve Smart Contract",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha ./test/**/*.js --timeout 0 --exit",
+    "aetest": "aeproject test"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aeternity/aepp-sdk": "3.0.0",
-    "forgae": "1.4.0",
-    "yarn": "1.22.0"
+    "@aeternity/aepp-sdk": "^7.5.0",
+    "aeproject-lib": "^2.2.0",
+    "bignumber.js": "^9.0.0",
+    "esm": "^3.2.25"
   }
 }
