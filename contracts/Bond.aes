@@ -8,10 +8,8 @@ include "Pair.aes"
 
 
 namespace FracApprox =
-	function int_root( base  : Frac.frac
-										, exp   : int
-										, error : Frac.frac
-										) =
+
+	function int_root(base : Frac.frac, exp : int, error : Frac.frac) =
 		require(Frac.geq(error, Frac.from_int(0)), "Negative error")
 		require(Frac.geq(base, Frac.from_int(0)), "Negative base")
 
@@ -30,12 +28,7 @@ namespace FracApprox =
 				let ub = if(Frac.lt(base, Frac.from_int(1))) base else inv_base
 				run_int_root(inv_base, -exp, error, Frac.from_int(0), ub)
 
-	private function run_int_root( base  : Frac.frac
-																, exp   : int
-																, error : Frac.frac
-																, lb : Frac.frac
-																, ub : Frac.frac
-																) =
+	private function run_int_root(base : Frac.frac, exp : int, error : Frac.frac, lb : Frac.frac, ub : Frac.frac) =
 			
 		let guess = Frac.div(Frac.add(lb, ub), Frac.from_int(2))
 
@@ -97,11 +90,7 @@ namespace BondingLib =
     else
       run_log_2(y0, 6, Frac.from_int(int_part), 0)
     
-  private function run_log_2( y1 : Frac.frac
-                            , it : int
-                            , acc : Frac.frac
-                            , squaring : int
-                            ) : Frac.frac =
+  private function run_log_2(y1 : Frac.frac, it : int, acc : Frac.frac, squaring : int) : Frac.frac =
     if(it == 0)
       acc
     // elif(it < 7) abort(Frac.to_str(y1))
@@ -143,12 +132,7 @@ namespace BondingLib =
   function exp(x : Frac.frac) : Frac.frac =
 	// empiricly checked - 32 is number of iteration steps
     run_exp(x, 32, 0, 1, Frac.from_int(0))
-  private function run_exp( x : Frac.frac
-                          , steps : int
-                          , it : int
-                          , fac : int
-                          , acc : Frac.frac
-                          ) : Frac.frac =
+  private function run_exp(x : Frac.frac, steps : int, it : int, fac : int, acc : Frac.frac) : Frac.frac =
     if(it == steps) acc
     else
       let next = Frac.add(acc, Frac.div(Frac.int_exp(x, it), Frac.from_int(fac)))
@@ -190,8 +174,7 @@ payable contract BondingCurve =
 	payable stateful entrypoint buy(minimum : option(int)) : int =
 		let tokens_amount = buy_amount(Call.value)
 		require( Option.match(true, (req) => req =< tokens_amount, minimum)
-						, "Asked for too much contract tokens"
-						)
+						, "Asked for too much contract tokens")
 		put(state{ balances[Call.caller] = caller_balance() + tokens_amount })
 		tokens_amount
 
@@ -203,16 +186,13 @@ payable contract BondingCurve =
 
 		let price = sell_price(amount)
 		require( Option.match(true, (req) => price =< req, minimum)
-						, "Asked for too low price"
-						)
+						, "Asked for too low price")
 		
 		require(Contract.balance >= price
-						, "I can't afford due to accumulated approximation errors"
-						)
+						, "I can't afford due to accumulated approximation errors")
 		Chain.spend(Call.caller, price)
 		put(state{ balances[Call.caller] = balance - amount })
 		price
-
 
 	entrypoint
 		buy_amount : int => int
