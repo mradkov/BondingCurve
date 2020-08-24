@@ -63,7 +63,7 @@ namespace BondingLib =
 	// exponent of Frac
 	// TODO: keep in mind approximation errors propagation
   function power(base : Frac.frac, exponent : Frac.frac) : Frac.frac =
-    require(Frac.geq(base, Frac.from_int(0)), "Negative base")
+    require(Frac.geq(base, Frac.from_int(0)), "NEGATIVE_BASE")
 
     // x^y = e^(ln(x) * y)
     exp(Frac.mul(ln(base), exponent))
@@ -155,10 +155,10 @@ payable contract BondingCurve =
 
 	entrypoint init() =
 		// check if frac numbers are sane, shound not be negative
-		require(Frac.is_sane(error()), "insane error")
-		require(Frac.geq(error(), Frac.from_int(0)), "negative error")
-		require(Frac.gt(ratio(), Frac.from_int(0)), "ratio must be > 0")
-		require(Frac.leq(ratio(), Frac.from_int(1)), "ratio must be =< 1")
+		require(Frac.is_sane(error()), "INSANE_ERROR")
+		require(Frac.geq(error(), Frac.from_int(0)), "NEGATIVE_ERROR")
+		require(Frac.gt(ratio(), Frac.from_int(0)), "RATIO_MUST_GT_0")
+		require(Frac.leq(ratio(), Frac.from_int(1)), "RATIO_MUST_LEQ_0")
 		{balances = {}}
 
 	// TODO: looking up for balances should be via remote call to the token contract.
@@ -173,22 +173,22 @@ payable contract BondingCurve =
 	payable stateful entrypoint buy(minimum : option(int)) : int =
 		let tokens_amount = buy_amount(Call.value)
 		require( Option.match(true, (req) => req =< tokens_amount, minimum)
-						, "Asked for too much contract tokens")
+						, "EXPECTED_TOO_MUCH_TOKENS")
 		put(state{ balances[Call.caller] = caller_balance() + tokens_amount })
 		tokens_amount
 
 	// minimum is expectation
 	stateful entrypoint sell(amount : int, minimum : option(int)) =
 		let balance = caller_balance()
-		require(balance >= amount, "Not enough tokens")
-		require(amount >= 0, "Negative sell amount")
+		require(balance >= amount, "INSUFFICIENT_TOKENS")
+		require(amount >= 0, "AMOUNT_NEGATIVE")
 
 		let price = sell_price(amount)
 		require( Option.match(true, (req) => price =< req, minimum)
-						, "Asked for too low price")
+						, "ASKED_TOO_LOW_PRICE")
 		
 		require(Contract.balance >= price
-						, "I can't afford due to accumulated approximation errors")
+						, "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
 		Chain.spend(Call.caller, price)
 		put(state{ balances[Call.caller] = balance - amount })
 		price
@@ -197,7 +197,7 @@ payable contract BondingCurve =
 		buy_amount : int => int
 		buy_amount(0) = 0
 		buy_amount(price) =
-			require(price >= 0, "Negative price")
+			require(price >= 0, "PRICE_NEGATIVE")
 
 			let supply = supply()
 
@@ -221,10 +221,10 @@ payable contract BondingCurve =
 		sell_price : int => int
 		sell_price(0) = 0
 		sell_price(amount : int) : int =
-			require(amount >= 0, "Negative amount")
+			require(amount >= 0, "AMOUNT_NEGATIVE")
 
 			let supply = supply()
-			require(supply >= amount, "Not enough tokens in the market")
+			require(supply >= amount, "ISUFFICIENT_TOKENS_IN_MARKET")
 
 			let res_now =
 				let real = Contract.balance
