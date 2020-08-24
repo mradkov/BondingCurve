@@ -9,78 +9,78 @@ include "Pair.aes"
 
 namespace FracApprox =
 
-	function int_root(base : Frac.frac, exp : int, error : Frac.frac) =
-		require(Frac.geq(error, Frac.from_int(0)), "Negative error")
-		require(Frac.geq(base, Frac.from_int(0)), "Negative base")
+  function int_root(base : Frac.frac, exp : int, error : Frac.frac) =
+    require(Frac.geq(error, Frac.from_int(0)), "Negative error")
+    require(Frac.geq(base, Frac.from_int(0)), "Negative base")
 
-		if(Frac.eq(base, Frac.from_int(1))) base
-		elif(Frac.eq(base, Frac.from_int(0))) base
-		else
-			let inv_base = Frac.inv(base)
+    if(Frac.eq(base, Frac.from_int(1))) base
+    elif(Frac.eq(base, Frac.from_int(0))) base
+    else
+      let inv_base = Frac.inv(base)
 
-			if(exp == 0) abort("Zero root")
-			elif(exp == 1) base
-			elif(exp == -1) inv_base
-			elif(exp > 0)
-				let ub = if(Frac.lt(base, Frac.from_int(1))) inv_base else base
-				run_int_root(base, exp, error, Frac.from_int(0), ub)
-			else
-				let ub = if(Frac.lt(base, Frac.from_int(1))) base else inv_base
-				run_int_root(inv_base, -exp, error, Frac.from_int(0), ub)
+      if(exp == 0) abort("Zero root")
+      elif(exp == 1) base
+      elif(exp == -1) inv_base
+      elif(exp > 0)
+        let ub = if(Frac.lt(base, Frac.from_int(1))) inv_base else base
+        run_int_root(base, exp, error, Frac.from_int(0), ub)
+      else
+        let ub = if(Frac.lt(base, Frac.from_int(1))) base else inv_base
+        run_int_root(inv_base, -exp, error, Frac.from_int(0), ub)
 
-	private function run_int_root(base : Frac.frac, exp : int, error : Frac.frac, lb : Frac.frac, ub : Frac.frac) =
-			
-		let guess = Frac.div(Frac.add(lb, ub), Frac.from_int(2))
+  private function run_int_root(base : Frac.frac, exp : int, error : Frac.frac, lb : Frac.frac, ub : Frac.frac) =
+      
+    let guess = Frac.div(Frac.add(lb, ub), Frac.from_int(2))
 
-		// prediction of the guess
-		let guess_pred = Frac.int_exp(guess, exp)
+    // prediction of the guess
+    let guess_pred = Frac.int_exp(guess, exp)
 
-		// loss tell us the difference between our prediction and correct result
-		let loss = Frac.sub(base, guess_pred)
+    // loss tell us the difference between our prediction and correct result
+    let loss = Frac.sub(base, guess_pred)
 
-		// if the loss is acceptable we take our guess
-		if(Frac.lt(Frac.abs(loss), error))
-			guess
-		// base < guess_pred. We try lower
-		elif (Frac.lt(loss, Frac.from_int(0)))
-			run_int_root(base, exp, error, lb, guess)
-		// base > guess_pred. We try higher
-		elif (Frac.gt(loss, Frac.from_int(0)))
-			run_int_root(base, exp, error, guess, ub)
-		else abort("FracApprox: impossible happened")
+    // if the loss is acceptable we take our guess
+    if(Frac.lt(Frac.abs(loss), error))
+      guess
+    // base < guess_pred. We try lower
+    elif (Frac.lt(loss, Frac.from_int(0)))
+      run_int_root(base, exp, error, lb, guess)
+    // base > guess_pred. We try higher
+    elif (Frac.gt(loss, Frac.from_int(0)))
+      run_int_root(base, exp, error, guess, ub)
+    else abort("FracApprox: impossible happened")
 
-	function frac_exp(base : Frac.frac, exp : Frac.frac, error : Frac.frac) =
-		let (en, ed) = Frac.to_pair(exp)
-		Frac.int_exp(int_root(base, ed, error), en)
+  function frac_exp(base : Frac.frac, exp : Frac.frac, error : Frac.frac) =
+    let (en, ed) = Frac.to_pair(exp)
+    Frac.int_exp(int_root(base, ed, error), en)
 
 namespace BondingLib =
-	// The bonding lib is calculating all of the impossible things on irrational numbers
+  // The bonding lib is calculating all of the impossible things on irrational numbers
 
   // Should be enough
-	// basic approximaion - fair enough accurate - wikipedia
+  // basic approximaion - fair enough accurate - wikipedia
   function ln2() = Frac.make_frac(527569561117734051, 761121989548521807)
 
-	// exponent of Frac
-	// TODO: keep in mind approximation errors propagation
+  // exponent of Frac
+  // TODO: keep in mind approximation errors propagation
   function power(base : Frac.frac, exponent : Frac.frac) : Frac.frac =
     require(Frac.geq(base, Frac.from_int(0)), "NEGATIVE_BASE")
 
     // x^y = e^(ln(x) * y)
     exp(Frac.mul(ln(base), exponent))
 
-	// multiplication of the log_2 and ln2 - basic high scool compl
+  // multiplication of the log_2 and ln2 - basic high scool compl
   function ln(x : Frac.frac) : Frac.frac =
     Frac.mul(log_2(x), ln2())
 
-	// The main problem is going on here.
+  // The main problem is going on here.
   function log_2(x : Frac.frac) : Frac.frac =
     let int_part = log_2_int(x)
     // log_2(x) = int_part + y
     // where y = log_2(2^(-int_part)x) and 1 =< y < 2
 
-		// binary representation ??
-		// iterative approximation
-		// ref: https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
+    // binary representation ??
+    // iterative approximation
+    // ref: https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
     let y0 = Func.iter( int_part, (xx) => Frac.div(xx, Frac.from_int(2)))(x)
     // y0 < 2
 
@@ -95,12 +95,12 @@ namespace BondingLib =
     // elif(it < 7) abort(Frac.to_str(y1))
     else
       let (y2, sq) = square_over_2(y1, 0)
-			// the nominator is raising exponentially - gas ceils
-			// Frac.optimize tries to approximate fractional number to fit in the error margin and take at least space possible
-			// e.g. 2/1001 will try to devide 2/1000 and then reduce
-			// Not working good
-			// bancor uses more nasty trick (relying on the fact the integers are limited and building the number in the binary way with 0 and 1)
-			// possible to forcefully do it ..
+      // the nominator is raising exponentially - gas ceils
+      // Frac.optimize tries to approximate fractional number to fit in the error margin and take at least space possible
+      // e.g. 2/1001 will try to devide 2/1000 and then reduce
+      // Not working good
+      // bancor uses more nasty trick (relying on the fact the integers are limited and building the number in the binary way with 0 and 1)
+      // possible to forcefully do it ..
       run_log_2( Frac.optimize( Frac.div(y2, Frac.from_int(2))
                               , Frac.make_frac(1, 10000000000)
                               )
@@ -116,8 +116,8 @@ namespace BondingLib =
     else
       square_over_2(Frac.mul(x, x), it + 1)
 
-	// calculates the integer part of log_2, performs linear serach
-	// the complexity of this is Log so it is acceptible
+  // calculates the integer part of log_2, performs linear serach
+  // the complexity of this is Log so it is acceptible
   function log_2_int(x : Frac.frac) : int =
     run_log_2_int(x, 0, Frac.from_int(1))
 
@@ -129,7 +129,7 @@ namespace BondingLib =
       run_log_2_int(x, acc + 1, next)
 
   function exp(x : Frac.frac) : Frac.frac =
-	// empiricly checked - 32 is number of iteration steps
+  // empiricly checked - 32 is number of iteration steps
     run_exp(x, 32, 0, 1, Frac.from_int(0))
   private function run_exp(x : Frac.frac, steps : int, it : int, fac : int, acc : Frac.frac) : Frac.frac =
     if(it == steps) acc
@@ -143,102 +143,102 @@ namespace BondingLib =
 
 payable contract BondingCurve =
 
-	// contract with reserve ratio
-	entrypoint ratio() = Frac.make_frac(1, 4)
-	
-	// error used in approximations
-	entrypoint error() = Frac.make_frac(1, 10000)
+  // contract with reserve ratio
+  entrypoint ratio() = Frac.make_frac(1, 4)
+  
+  // error used in approximations
+  entrypoint error() = Frac.make_frac(1, 10000)
 
-	// TODO: balances should be kept in the token contract instead of this one.
-	// the BondingCurve contract logic can be stateless.
-	record state = { balances : map(address, int) }
+  // TODO: balances should be kept in the token contract instead of this one.
+  // the BondingCurve contract logic can be stateless.
+  record state = { balances : map(address, int) }
 
-	entrypoint init() =
-		// check if frac numbers are sane, shound not be negative
-		require(Frac.is_sane(error()), "INSANE_ERROR")
-		require(Frac.geq(error(), Frac.from_int(0)), "NEGATIVE_ERROR")
-		require(Frac.gt(ratio(), Frac.from_int(0)), "RATIO_MUST_GT_0")
-		require(Frac.leq(ratio(), Frac.from_int(1)), "RATIO_MUST_LEQ_0")
-		{balances = {}}
+  entrypoint init() =
+    // check if frac numbers are sane, shound not be negative
+    require(Frac.is_sane(error()), "INSANE_ERROR")
+    require(Frac.geq(error(), Frac.from_int(0)), "NEGATIVE_ERROR")
+    require(Frac.gt(ratio(), Frac.from_int(0)), "RATIO_MUST_GT_0")
+    require(Frac.leq(ratio(), Frac.from_int(1)), "RATIO_MUST_LEQ_0")
+    {balances = {}}
 
-	// TODO: looking up for balances should be via remote call to the token contract.
-	entrypoint caller_balance() =
-		Map.lookup_default(Call.caller, state.balances, 0)
+  // TODO: looking up for balances should be via remote call to the token contract.
+  entrypoint caller_balance() =
+    Map.lookup_default(Call.caller, state.balances, 0)
 
-	entrypoint supply() : int =
-		List.foldl( (a, b) => Pair.snd(b) + a, 0
-							, Map.to_list(state.balances)
-							)
+  entrypoint supply() : int =
+    List.foldl( (a, b) => Pair.snd(b) + a, 0
+              , Map.to_list(state.balances)
+              )
 
-	payable stateful entrypoint buy(minimum : option(int)) : int =
-		let tokens_amount = buy_amount(Call.value)
-		require( Option.match(true, (req) => req =< tokens_amount, minimum)
-						, "EXPECTED_TOO_MUCH_TOKENS")
-		put(state{ balances[Call.caller] = caller_balance() + tokens_amount })
-		tokens_amount
+  payable stateful entrypoint buy(minimum : option(int)) : int =
+    let tokens_amount = buy_amount(Call.value)
+    require( Option.match(true, (req) => req =< tokens_amount, minimum)
+            , "EXPECTED_TOO_MUCH_TOKENS")
+    put(state{ balances[Call.caller] = caller_balance() + tokens_amount })
+    tokens_amount
 
-	// minimum is expectation
-	stateful entrypoint sell(amount : int, minimum : option(int)) =
-		let balance = caller_balance()
-		require(balance >= amount, "INSUFFICIENT_TOKENS")
-		require(amount >= 0, "AMOUNT_NEGATIVE")
+  // minimum is expectation
+  stateful entrypoint sell(amount : int, minimum : option(int)) =
+    let balance = caller_balance()
+    require(balance >= amount, "INSUFFICIENT_TOKENS")
+    require(amount >= 0, "AMOUNT_NEGATIVE")
 
-		let price = sell_price(amount)
-		require( Option.match(true, (req) => price =< req, minimum)
-						, "ASKED_TOO_LOW_PRICE")
-		
-		require(Contract.balance >= price
-						, "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
-		Chain.spend(Call.caller, price)
-		put(state{ balances[Call.caller] = balance - amount })
-		price
+    let price = sell_price(amount)
+    require( Option.match(true, (req) => price =< req, minimum)
+            , "ASKED_TOO_LOW_PRICE")
+    
+    require(Contract.balance >= price
+            , "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
+    Chain.spend(Call.caller, price)
+    put(state{ balances[Call.caller] = balance - amount })
+    price
 
-	entrypoint
-		buy_amount : int => int
-		buy_amount(0) = 0
-		buy_amount(price) =
-			require(price >= 0, "PRICE_NEGATIVE")
+  entrypoint
+    buy_amount : int => int
+    buy_amount(0) = 0
+    buy_amount(price) =
+      require(price >= 0, "PRICE_NEGATIVE")
 
-			let supply = supply()
+      let supply = supply()
 
-			let res =
-					if(Contract.balance == 0)
-						// (price/ratio)^ratio
-						FracApprox.frac_exp(
-								Frac.div(Frac.from_int(price), ratio()),
-								ratio(),
-								error()
-								)
-					else
-						// supply * (((1 + price / Contract.balance)^ratio) - 1)
-						let token_fac = Frac.make_frac(price, Contract.balance)
-						let v1 = Frac.add(Frac.from_int(1), token_fac)
-						let v2 = FracApprox.frac_exp(v1, ratio(), error())
-						Frac.mul(Frac.from_int(supply), Frac.sub(v2, Frac.from_int(1)))
-			Frac.floor(res)
+      let res =
+          if(Contract.balance == 0)
+            // (price/ratio)^ratio
+            FracApprox.frac_exp(
+                Frac.div(Frac.from_int(price), ratio()),
+                ratio(),
+                error()
+                )
+          else
+            // supply * (((1 + price / Contract.balance)^ratio) - 1)
+            let token_fac = Frac.make_frac(price, Contract.balance)
+            let v1 = Frac.add(Frac.from_int(1), token_fac)
+            let v2 = FracApprox.frac_exp(v1, ratio(), error())
+            Frac.mul(Frac.from_int(supply), Frac.sub(v2, Frac.from_int(1)))
+      Frac.floor(res)
 
-	entrypoint
-		sell_price : int => int
-		sell_price(0) = 0
-		sell_price(amount : int) : int =
-			require(amount >= 0, "AMOUNT_NEGATIVE")
+  entrypoint
+    sell_price : int => int
+    sell_price(0) = 0
+    sell_price(amount : int) : int =
+      require(amount >= 0, "AMOUNT_NEGATIVE")
 
-			let supply = supply()
-			require(supply >= amount, "ISUFFICIENT_TOKENS_IN_MARKET")
+      let supply = supply()
+      require(supply >= amount, "ISUFFICIENT_TOKENS_IN_MARKET")
 
-			let res_now =
-				let real = Contract.balance
-				let theoretical = Frac.floor(reserve_on_supply(supply))
-				if(real > theoretical) theoretical else real
-			let res_after = Frac.ceil(reserve_on_supply(supply - amount))
-			let price = res_now - res_after
+      let res_now =
+        let real = Contract.balance
+        let theoretical = Frac.floor(reserve_on_supply(supply))
+        if(real > theoretical) theoretical else real
+      let res_after = Frac.ceil(reserve_on_supply(supply - amount))
+      let price = res_now - res_after
 
-			if(price < 0) 0 else price
+      if(price < 0) 0 else price
 
 
-	entrypoint reserve_on_supply(supply : int) : Frac.frac =
-		let rev_ratio = Frac.inv(ratio())
-		Frac.mul
-			( FracApprox.frac_exp(Frac.from_int(supply), rev_ratio, error())
-			, ratio()
-			)
+  entrypoint reserve_on_supply(supply : int) : Frac.frac =
+    let rev_ratio = Frac.inv(ratio())
+    Frac.mul
+      ( FracApprox.frac_exp(Frac.from_int(supply), rev_ratio, error())
+      , ratio()
+      )
