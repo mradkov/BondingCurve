@@ -54,11 +54,10 @@ namespace FracApprox =
 		Frac.int_exp(int_root(base, ed, error), en)
 
 namespace BondingLib =
-	// The bonding lib is calculating all of the impossible thinggs on irrational numbers
-
+	// The bonding lib is calculating all of the impossible things on irrational numbers
 
   // Should be enough
-	// basic approximaion - fair ehough accurate -wikipedia
+	// basic approximaion - fair enough accurate - wikipedia
   function ln2() = Frac.make_frac(527569561117734051, 761121989548521807)
 
 	// exponent of Frac
