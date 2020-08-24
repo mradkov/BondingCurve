@@ -10,15 +10,15 @@ include "Pair.aes"
 namespace FracApprox =
 
   function int_root(base : Frac.frac, exp : int, error : Frac.frac) =
-    require(Frac.geq(error, Frac.from_int(0)), "Negative error")
-    require(Frac.geq(base, Frac.from_int(0)), "Negative base")
+    require(Frac.geq(error, Frac.from_int(0)), "NEGATIVE_ERROR")
+    require(Frac.geq(base, Frac.from_int(0)), "NEGATIVE_BASE")
 
     if(Frac.eq(base, Frac.from_int(1))) base
     elif(Frac.eq(base, Frac.from_int(0))) base
     else
       let inv_base = Frac.inv(base)
 
-      if(exp == 0) abort("Zero root")
+      if(exp == 0) abort("ZERO_ROOT")
       elif(exp == 1) base
       elif(exp == -1) inv_base
       elif(exp > 0)
@@ -47,7 +47,7 @@ namespace FracApprox =
     // base > guess_pred. We try higher
     elif (Frac.gt(loss, Frac.from_int(0)))
       run_int_root(base, exp, error, guess, ub)
-    else abort("FracApprox: impossible happened")
+    else abort("FRAC_APPROX_IMPOSSIBLE_HAPPENED")
 
   function frac_exp(base : Frac.frac, exp : Frac.frac, error : Frac.frac) =
     let (en, ed) = Frac.to_pair(exp)
