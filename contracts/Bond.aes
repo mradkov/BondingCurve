@@ -9,7 +9,7 @@ include "Pair.aes"
 
 namespace FracApprox =
     function int_root( base  : Frac.frac
-                     , exp   : int
+										 , exp   : int
                      , error : Frac.frac
                      ) =
         require(Frac.geq(error, Frac.from_int(0)), "Negative error")
@@ -61,24 +61,34 @@ namespace FracApprox =
         Frac.int_exp(int_root(base, ed, error), en)
 
 namespace BondingLib =
+	// The bonding lib is calculating all of the impossible thinggs on irrational numbers
+
 
   // Should be enough
+	// basic approximaion - fair ehough accurate -wikipedia
   function ln2() = Frac.make_frac(527569561117734051, 761121989548521807)
 
+	// exponent of Frac
+	// TODO: keep in mind approximation errors propagation
   function power(base : Frac.frac, exponent : Frac.frac) : Frac.frac =
     require(Frac.geq(base, Frac.from_int(0)), "Negative base")
 
     // x^y = e^(ln(x) * y)
     exp(Frac.mul(ln(base), exponent))
 
+	// multiplication of the log_2 and ln2 - basic high scool compl
   function ln(x : Frac.frac) : Frac.frac =
     Frac.mul(log_2(x), ln2())
 
+	// The main problem is going on here.
   function log_2(x : Frac.frac) : Frac.frac =
     let int_part = log_2_int(x)
     // log_2(x) = int_part + y
     // where y = log_2(2^(-int_part)x) and 1 =< y < 2
 
+		// binary representation ??
+		// iterative approximation
+		// ref: https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
     let y0 = Func.iter( int_part, (xx) => Frac.div(xx, Frac.from_int(2)))(x)
     // y0 < 2
 
@@ -97,6 +107,12 @@ namespace BondingLib =
     // elif(it < 7) abort(Frac.to_str(y1))
     else
       let (y2, sq) = square_over_2(y1, 0)
+			// the nominator is raising exponentially - gas ceils
+			// Frac.optimize tries to approximate fractional number to fit in the error margin and take at least space possible
+			// e.g. 2/1001 will try to devide 2/1000 and then reduce
+			// Not working good
+			// bancor uses more nasty trick (relying on the fact the integers are limited and building the number in the binary way with 0 and 1)
+			// possible to forcefully do it ..
       run_log_2( Frac.optimize( Frac.div(y2, Frac.from_int(2))
                               , Frac.make_frac(1, 10000000000)
                               )
@@ -112,6 +128,8 @@ namespace BondingLib =
     else
       square_over_2(Frac.mul(x, x), it + 1)
 
+	// calculates the integer part of log_2, performs linear serach
+	// the complexity of this is Log so it is acceptible
   function log_2_int(x : Frac.frac) : int =
     run_log_2_int(x, 0, Frac.from_int(1))
 
@@ -123,6 +141,7 @@ namespace BondingLib =
       run_log_2_int(x, acc + 1, next)
 
   function exp(x : Frac.frac) : Frac.frac =
+	// empiricly checked - 32 is number of iteration steps
     run_exp(x, 32, 0, 1, Frac.from_int(0))
   private function run_exp( x : Frac.frac
                           , steps : int
@@ -140,13 +159,20 @@ namespace BondingLib =
              )
 
 payable contract BondingCurve =
+
+		// contract with reserve ratio
     entrypoint ratio() = Frac.make_frac(1, 4)
+		
+		// error used in approximations
     entrypoint error() = Frac.make_frac(1, 10000)
+
+
 
     record state = 
         { balances : map(address, int)
         }
     entrypoint init() =
+				// check if frac numbers are sane, shound not be negative
         require(Frac.is_sane(error()), "insane error")
         require(Frac.geq(error(), Frac.from_int(0)), "negative error")
         require(Frac.gt(ratio(), Frac.from_int(0)), "ratio must be > 0")
@@ -157,12 +183,10 @@ payable contract BondingCurve =
     entrypoint caller_balance() =
         Map.lookup_default(Call.caller, state.balances, 0)
 
-
     entrypoint supply() : int =
         List.foldl( (a, b) => Pair.snd(b) + a, 0
                   , Map.to_list(state.balances)
                   )
-
 
     payable stateful entrypoint buy(minimum : option(int)) : int =
         let tokens_amount = buy_amount(Call.value)
@@ -172,7 +196,7 @@ payable contract BondingCurve =
         put(state{ balances[Call.caller] = caller_balance() + tokens_amount })
         tokens_amount
 
-
+		// minimum is expectation
     stateful entrypoint sell(amount : int, minimum : option(int)) =
         let balance = caller_balance()
         require(balance >= amount, "Not enough tokens")
@@ -240,3 +264,17 @@ payable contract BondingCurve =
         ( FracApprox.frac_exp(Frac.from_int(supply), rev_ratio, error())
         , ratio()
         )
+
+// nobody covers the case balance = 0
+
+
+
+// PROBLEM: due to appr erros somebody can take a bit more than they should and the contract can get to a state where it cannot payout
+
+
+// https://stackoverflow.com/questions/2668248/how-to-find-a-binary-logarithm-very-fast-o1-at-best/30996072#30996072
+// uses the assumtion the integer is 64 bits.
+
+// square with coefficien the integer will be trivial
+
+// bancor is for any polynomial
