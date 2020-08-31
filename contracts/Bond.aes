@@ -179,8 +179,7 @@ payable contract BondingCurve =
 
   // minimum is expectation
   stateful entrypoint
-    sell : (int, option(int)) => unit
-    sell(amount, minimum) =
+    sell(amount: int, minimum: option(int)) =
       let balance = caller_balance()
       require(balance >= amount, "INSUFFICIENT_TOKENS")
       require(amount >= 0, "AMOUNT_NEGATIVE")
