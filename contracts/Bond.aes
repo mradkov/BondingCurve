@@ -178,20 +178,22 @@ payable contract BondingCurve =
     tokens_amount
 
   // minimum is expectation
-  stateful entrypoint sell(amount : int, minimum : option(int)) =
-    let balance = caller_balance()
-    require(balance >= amount, "INSUFFICIENT_TOKENS")
-    require(amount >= 0, "AMOUNT_NEGATIVE")
+  stateful entrypoint
+    sell : (int, option(int)) => unit
+    sell(amount, minimum) =
+      let balance = caller_balance()
+      require(balance >= amount, "INSUFFICIENT_TOKENS")
+      require(amount >= 0, "AMOUNT_NEGATIVE")
 
-    let price = sell_price(amount)
-    require( Option.match(true, (req) => price =< req, minimum)
-            , "ASKED_TOO_LOW_PRICE")
-    
-    require(Contract.balance >= price
-            , "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
-    Chain.spend(Call.caller, price)
-    put(state{ balances[Call.caller] = balance - amount })
-    price
+      let price = sell_price(amount)
+      require( Option.match(true, (req) => price =< req, minimum)
+              , "ASKED_TOO_LOW_PRICE")
+      
+      require(Contract.balance >= price
+              , "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
+      Chain.spend(Call.caller, price)
+      put(state{ balances[Call.caller] = balance - amount })
+      price
 
   entrypoint
     buy_amount : int => int
