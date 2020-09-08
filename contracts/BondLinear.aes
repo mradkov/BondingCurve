@@ -1,0 +1,62 @@
+@compiler >=4.2
+
+include "Option.aes"
+include "List.aes"
+include "Pair.aes"
+
+contract FungibleTokenFullInterface =
+  entrypoint mint                 : (address, int)          => unit
+  entrypoint burn                 : (int)                   => unit
+  entrypoint balances             : ()                      => map(address, int)
+
+
+payable contract BondingCurveLinear =
+
+  record state = { price : int, token: option(FungibleTokenFullInterface) }
+
+  entrypoint init(initial_price : int) : state = { price = initial_price, token = None }
+
+  entrypoint supply() =
+    switch(state.token)
+      Some(token) => List.foldl( (a, b) => Pair.snd(b) + a, 0
+                               , Map.to_list(token.balances()))
+      None => abort("NO_TOKEN_CONTRACT")
+    
+
+  entrypoint price() : int = state.price
+  entrypoint token() : option(FungibleTokenFullInterface) = state.token
+   
+  stateful entrypoint set_token(token: FungibleTokenFullInterface) =
+    // require_owner()
+    put(state{ token = Some(token) })
+
+  payable stateful entrypoint buy() =
+    require_token()
+    let amount = Call.value / state.price
+    switch(state.token)
+      Some(token) => token.mint(Call.caller, amount)
+      None => abort("NO_TOKEN_CONTRACT")
+
+  stateful entrypoint sell(amount: int) =
+    require_token()
+    let return_amount = 0 // calculate the amount by the sell curve and the desired sell amount
+    // burn tokens
+    switch(state.token)
+      Some(token) =>
+        // PROBLEM HERE:
+        // Token.burn() burns the amount from the Call.caller and not Call.origin
+        token.burn(amount)
+        // update price here
+        let new_price = 1 // calculate price here
+        put(state{ price = new_price })
+      None => abort("NO_TOKEN_CONTRACT")
+
+  stateful entrypoint withdraw() =
+    // require_owner()
+    Chain.spend(Call.caller, Chain.balance(Contract.address))
+
+  // function require_owner() =
+  //   require(Call.caller == state.owner, "UNAUTHORIZED")
+  
+  function require_token() =
+    require(Option.is_some(state.token), "NO_TOKEN_CONTRACT")
