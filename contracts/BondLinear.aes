@@ -4,31 +4,32 @@ include "Option.aes"
 include "List.aes"
 include "Pair.aes"
 
-contract FungibleTokenFullInterface =
-  entrypoint mint                 : (address, int)          => unit
-  entrypoint burn                 : (int)                   => unit
-  entrypoint balances             : ()                      => map(address, int)
+
+contract Token =
+  stateful entrypoint mint : (address, int) => unit
+  stateful entrypoint transfer_allowance : (address, address, int) => unit
+  stateful entrypoint burn : (int) => unit
+  entrypoint balances : () => map(address, int)
 
 
 payable contract BondingCurveLinear =
 
-  record state = { price : int, token: option(FungibleTokenFullInterface) }
+  record state = { price : int, token: option(FungibleTokenFullInterface), MAX_RESERVE_RATIO: 1000000 }
 
-  entrypoint init(initial_price : int) : state = { price = initial_price, token = None }
+  stateful entrypoint init(initial_price : int) : state = { price = initial_price, token = None }
 
   entrypoint supply() =
     switch(state.token)
-      Some(token) => List.foldl( (a, b) => Pair.snd(b) + a, 0
-                               , Map.to_list(token.balances()))
+      Some(token) => List.foldl( (a, b) => Pair.snd(b) + a, 0, Map.to_list(token.balances()))
       None => abort("NO_TOKEN_CONTRACT")
     
-
   entrypoint price() : int = state.price
-  entrypoint token() : option(FungibleTokenFullInterface) = state.token
+  entrypoint get_token() : Token =
+    switch(state)
+      Some(token) => token
+      None => abort("NO_TOKEN_SET")
    
-  stateful entrypoint set_token(token: FungibleTokenFullInterface) =
-    // require_owner()
-    put(state{ token = Some(token) })
+  stateful entrypoint set_token(token: Token) = put(state{ token = Some(token) })
 
   payable stateful entrypoint buy() =
     require_token()
@@ -51,6 +52,15 @@ payable contract BondingCurveLinear =
         put(state{ price = new_price })
       None => abort("NO_TOKEN_CONTRACT")
 
+
+  payable stateful entrypoint buy() : unit =
+    get_token().mint(Call.caller, Call.value)
+
+  stateful entrypoint sell(amount : int) : unit =
+    get_token().transfer_allowance(Call.caller, Contract.address, amount)
+    get_token().burn(amount)
+    Chain.spend(Call.caller, amount)
+
   stateful entrypoint withdraw() =
     // require_owner()
     Chain.spend(Call.caller, Chain.balance(Contract.address))
@@ -60,3 +70,134 @@ payable contract BondingCurveLinear =
   
   function require_token() =
     require(Option.is_some(state.token), "NO_TOKEN_CONTRACT")
+
+
+/**
+   * @dev given a continuous token supply, reserve token balance, reserve ratio, and a deposit amount (in the reserve token),
+   * calculates the return for a given conversion (in the continuous token)
+   *
+   * Formula:
+   * Return = _supply * ((1 + _depositAmount / _reserveBalance) ^ (_reserveRatio / MAX_RESERVE_RATIO) - 1)
+   *
+   * @param _supply              continuous token total supply
+   * @param _reserveBalance    total reserve token balance
+   * @param _reserveRatio     reserve ratio, represented in ppm, 1-1000000
+   * @param _depositAmount       deposit amount, in reserve token
+   *
+   *  @return purchase return amount
+  */
+  function calculatePurchaseReturn(
+    uint256 _supply,
+    uint256 _reserveBalance,
+    uint32 _reserveRatio,
+    uint256 _depositAmount) public constant returns (uint256)
+  {
+    // validate input
+    require(_supply > 0 && _reserveBalance > 0 && _reserveRatio > 0 && _reserveRatio <= MAX_RESERVE_RATIO);
+     // special case for 0 deposit amount
+    if (_depositAmount == 0) {
+      return 0;
+    }
+     // special case if the ratio = 100%
+    if (_reserveRatio == MAX_RESERVE_RATIO) {
+      return _supply.mul(_depositAmount).div(_reserveBalance);
+    }
+     uint256 result;
+    uint8 precision;
+    uint256 baseN = _depositAmount.add(_reserveBalance);
+    (result, precision) = power(
+      baseN, _reserveBalance, _reserveRatio, MAX_RESERVE_RATIO
+    );
+    uint256 newTokenSupply = _supply.mul(result) >> precision;
+    return newTokenSupply - _supply;
+  }
+
+
+   /**
+   * @dev given a continuous token supply, reserve token balance, reserve ratio and a sell amount (in the continuous token),
+   * calculates the return for a given conversion (in the reserve token)
+   *
+   * Formula:
+   * Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_reserveRatio / MAX_RESERVE_RATIO)))
+   *
+   * @param _supply              continuous token total supply
+   * @param _reserveBalance    total reserve token balance
+   * @param _reserveRatio     constant reserve ratio, represented in ppm, 1-1000000
+   * @param _sellAmount          sell amount, in the continuous token itself
+   *
+   * @return sale return amount
+  */
+  function calculateSaleReturn(
+    _supply : int,
+    _reserveBalance: int,
+    _reserveRatio: int,
+    _sellAmount: int) : int =
+    // validate input
+    require(_supply > 0 && _reserveBalance > 0 && _reserveRatio > 0 && _reserveRatio <= state.MAX_RESERVE_RATIO && _sellAmount <= _supply, "INVALID_PARAMETERS");
+     // special case for 0 sell amount
+    if (_sellAmount == 0) {
+      return 0;
+    }
+     // special case for selling the entire supply
+    if (_sellAmount == _supply) {
+      return _reserveBalance;
+    }
+     // special case if the ratio = 100%
+    if (_reserveRatio == MAX_RESERVE_RATIO) {
+      return _reserveBalance * _sellAmount / _supply;
+    }
+    
+    let baseD : int = _supply - _sellAmount;
+    let (result, precision) = power(
+      _supply, baseD, MAX_RESERVE_RATIO, _reserveRatio
+    ); // check power function here
+
+    let oldBalance = _reserveBalance * result
+    let newBalance = _reserveBalance << precision
+
+    uint256 oldBalance = _reserveBalance.mul(result);
+    uint256 newBalance = _reserveBalance << precision;
+    return oldBalance.sub(newBalance).div(result);
+  }
+
+  /**
+      * @dev General Description:
+      *     Determine a value of precision.
+      *     Calculate an integer approximation of (_baseN / _baseD) ^ (_expN / _expD) * 2 ^ precision.
+      *     Return the result along with the precision used.
+      *
+      * Detailed Description:
+      *     Instead of calculating "base ^ exp", we calculate "e ^ (log(base) * exp)".
+      *     The value of "log(base)" is represented with an integer slightly smaller than "log(base) * 2 ^ precision".
+      *     The larger "precision" is, the more accurately this value represents the real value.
+      *     However, the larger "precision" is, the more bits are required in order to store this value.
+      *     And the exponentiation function, which takes "x" and calculates "e ^ x", is limited to a maximum exponent (maximum value of "x").
+      *     This maximum exponent depends on the "precision" used, and it is given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
+      *     Hence we need to determine the highest precision which can be used for the given input, before calling the exponentiation function.
+      *     This allows us to compute "base ^ exp" with maximum accuracy and without exceeding 256 bits in any of the intermediate computations.
+      *     This functions assumes that "_expN < 2 ^ 256 / log(MAX_NUM - 1)", otherwise the multiplication should be replaced with a "safeMul".
+      *     Since we rely on unsigned-integer arithmetic and "base < 1" ==> "log(base) < 0", this function does not support "_baseN < _baseD".
+    */
+    function power(_baseN : int, _baseD: int, _expN: int, _expD: int) : (int, int) =
+        // require(_baseN < MAX_NUM);
+
+        let FIXED_1 = 170141183460469231731687303715884105728;
+
+        let baseLog;
+        let base = _baseN * FIXED_1 / _baseD;
+        if (base < OPT_LOG_MAX_VAL) {
+            baseLog = optimalLog(base);
+        }
+        else {
+            baseLog = generalLog(base);
+        }
+
+        uint256 baseLogTimesExp = baseLog * _expN / _expD;
+        if (baseLogTimesExp < OPT_EXP_MAX_VAL) {
+            return (optimalExp(baseLogTimesExp), MAX_PRECISION);
+        }
+        else {
+            uint8 precision = findPositionInMaxExpArray(baseLogTimesExp);
+            return (generalExp(baseLogTimesExp >> (MAX_PRECISION - precision), precision), precision);
+        }
+    }
