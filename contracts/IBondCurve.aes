@@ -1,6 +1,7 @@
 @compiler >=4.2
 
 contract IBondCurve =
-  entrypoint price : () => int
+  entrypoint buy_price : () => int
+  entrypoint sell_price : () => int
   entrypoint calculate_buy_return : (int) = int
   entrypoint calculate_sell_return : (int) => int
