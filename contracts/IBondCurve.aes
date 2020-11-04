@@ -1,0 +1,16 @@
+@compiler >=4.2
+
+contract IBondCurve =
+  // Returns the current buy price
+  entrypoint buy_price : () => int
+  
+  // Returns the current sell price
+  entrypoint sell_price : () => int
+  
+  // Returns the amount of fungible tokens to be received
+  // when buying from the curve for the passed value of AE tokens.
+  entrypoint calculate_buy_return : (int) => int
+
+  // Returns the amount of AE tokens to be received
+  // when selling fungible tokens back to the curve.
+  entrypoint calculate_sell_return : (int) => int
