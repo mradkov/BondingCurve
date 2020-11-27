@@ -4,13 +4,15 @@ include "Frac.aes"
 
 contract BondCurve =
 
-  record state = { init_buy_price : Frac.frac
-                 , init_sell_price : Frac.frac
-                 , alpha: Frac.frac }
+  // Alpha angle of the curves
+  function alpha() : Frac.frac = Frac.from_int(1)
 
-  stateful entrypoint init() =
-    { init_buy_price = Frac.from_int(1), init_sell_price = Frac.from_int(0), alpha = Frac.from_int(1) }
-    
+  // Initial price for the buy curve
+  function init_buy_price() : Frac.frac = Frac.from_int(1)
+
+  // Initial price for the sell curve
+  function init_sell_price() : Frac.frac = Frac.from_int(0)
+
   // Returns the current buy price
   entrypoint
     buy_price : int => Frac.frac
@@ -28,7 +30,7 @@ contract BondCurve =
   // Calculate the AE price for amount of tokens to be bought
   // based on the total supply of the corresponding FT
   entrypoint
-    calculate_buy_price : (int, Frac.frac) => Frac.frac
+    calculate_buy_price : (int, Frac.frac) => Frac.frac // TODO: simplify to return int
     calculate_buy_price(total_supply: int, buy_tokens: Frac.frac) : Frac.frac =
       let total_supply_frac = Frac.from_int(total_supply)
       // (buy_price() + buy_curve(total_supply + buy_tokens)) * buy_tokens / Frac.from_int(2)
@@ -43,7 +45,7 @@ contract BondCurve =
   // Returns the amount of AE tokens to be received
   // when selling fungible tokens back to the curve.
   entrypoint
-    calculate_sell_return : (int, Frac.frac) => Frac.frac
+    calculate_sell_return : (int, Frac.frac) => Frac.frac // TODO: simplify to return int
     calculate_sell_return(total_supply: int, sell_tokens: Frac.frac) : Frac.frac =
       let total_supply_frac = Frac.from_int(total_supply)
       // (sell_price() + sell_curve(total_supply - sell_tokens)) * sell_tokens / Frac.from_int(2)
