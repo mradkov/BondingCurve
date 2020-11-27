@@ -51,8 +51,11 @@ contract BondCurve =
       // (sell_price() + sell_curve(total_supply - sell_tokens)) * sell_tokens / Frac.from_int(2)
       Frac.div(
         Frac.mul(
-          (Frac.add(sell_price(total_supply), sell_curve(Frac.sub(total_supply_frac, sell_tokens)))), sell_tokens),
-        Frac.from_int(2))
+          (Frac.add( sell_price(total_supply)
+                   , sell_curve(Frac.sub( total_supply_frac
+                                        , sell_tokens))))
+          , sell_tokens
+        ) , Frac.from_int(2))
 
   // Buy curve formula
   entrypoint buy_curve(x: Frac.frac) : Frac.frac =
@@ -63,4 +66,6 @@ contract BondCurve =
     Frac.sub(Frac.mul(x, state.alpha), state.init_sell_price)
 
   // !!! IMPORTANT
-  // require(Frac.is_sane(), "EVERYWHERE WHEN THE");
+  // Add require to check if the Frac is sane
+  // everywhere where it is passed as argument
+  // require(Frac.is_sane(), "...");
