@@ -11,13 +11,13 @@ contract BondCurve =
    *  the buy and sell curves and will determine
    *  the ratios for the reserve and the spread
    */ 
-  entrypoint alpha() : Frac.frac = Frac.from_int(1)
+  function alpha() : Frac.frac = Frac.from_int(1)
 
   // Initial price for the buy curve
-  entrypoint init_buy_price() : Frac.frac = Frac.from_int(1)
+  function init_buy_price() : Frac.frac = Frac.from_int(1)
 
   // Initial price for the sell curve
-  entrypoint init_sell_price() : Frac.frac = Frac.from_int(0)
+  function init_sell_price() : Frac.frac = Frac.from_int(0)
 
   // Returns the current buy price
   entrypoint
