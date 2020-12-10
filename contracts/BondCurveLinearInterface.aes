@@ -3,7 +3,7 @@
 /**
  * Linear Bonding Curve Interface
  */
-contract IBondCurve =
+contract BondCurveLinearInterface =
   // Returns the current buy price
   entrypoint buy_price : (int) => int
   
