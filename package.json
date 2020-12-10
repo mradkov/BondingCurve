@@ -8,7 +8,13 @@
     "aetest": "aeproject test",
     "postinstall": "node .scripts/postinstall.js"
   },
-  "author": "",
+  "author": "Milen Radkov <milenradkov@me.com> (https://mradkov.com)",
+  "keywords": [
+    "bonding curve",
+    "aeterniy",
+    "sophia",
+    "token"
+  ],
   "license": "ISC",
   "dependencies": {
     "@aeternity/aepp-sdk": "^7.5.0",
