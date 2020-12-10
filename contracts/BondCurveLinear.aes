@@ -10,8 +10,11 @@ contract BondCurve =
    *  This angle is used to define the distance between
    *  the buy and sell curves and will determine
    *  the ratios for the reserve and the spread
+   *
+   *  Adjust the second argument of Frac.make_frac()
+   *  according to your fungible token decimals
    */ 
-  function alpha() : Frac.frac = Frac.from_int(1)
+  function alpha() : Frac.frac = Frac.make_frac(1, 1)
 
   // Initial price for the buy curve
   function init_buy_price() : Frac.frac = Frac.from_int(1)
@@ -47,6 +50,7 @@ contract BondCurve =
     calculate_buy_price(total_supply: int, buy_tokens: int) : int =
       require(total_supply >= 0, "ERROR_TOTAL_SUPPLY_NEGATIVE")
       require(buy_tokens >= 0, "ERROR_BUY_TOKENS_NEGATIVE")
+      require(total_supply >= sell_tokens, "ERROR_SELL_INSUFFICIENT_TOTAL_SUPPLY")
       let buy_tokens_amount = Frac.from_int(buy_tokens)
       let total_supply_frac = Frac.from_int(total_supply)
       Frac.ceil(Frac.div(
