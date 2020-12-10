@@ -17,55 +17,53 @@ contract BondCurve =
   entrypoint
     buy_price : int => Frac.frac
     buy_price(0) = Frac.from_int(0)
-    buy_price(total_supply: int) : Frac.frac =
-      buy_curve(Frac.from_int(total_supply))
+    buy_price(total_supply: int) : int =
+      Frac.ceil(buy_curve(Frac.from_int(total_supply)))
   
   // Returns the current sell price
   entrypoint
     sell_price : int => Frac.frac
     sell_price(0) = Frac.from_int(0)
-    sell_price(total_supply: int) : Frac.frac =
-      sell_curve(Frac.from_int(total_supply))
+    sell_price(total_supply: int) : int =
+      Frac.ceil(sell_curve(Frac.from_int(total_supply)))
   
   // Calculate the AE price for amount of tokens to be bought
   // based on the total supply of the corresponding FT
   entrypoint
-    calculate_buy_price : (int, Frac.frac) => Frac.frac // TODO: simplify to return int
-    calculate_buy_price(total_supply: int, buy_tokens: Frac.frac) : Frac.frac =
+    calculate_buy_price : (int, Frac.frac) => int
+    calculate_buy_price(total_supply: int, buy_tokens: Frac.frac) : int =
       let total_supply_frac = Frac.from_int(total_supply)
       // (buy_price() + buy_curve(total_supply + buy_tokens)) * buy_tokens / Frac.from_int(2)
-      Frac.div(
+      Frac.ceil(Frac.div(
         Frac.mul(
           (Frac.add( buy_price(total_supply)
                    , buy_curve(Frac.add( total_supply_frac
                                        , buy_tokens))))
           , buy_tokens
-        ) , Frac.from_int(2))
+        ) , Frac.from_int(2)))
 
   // Returns the amount of AE tokens to be received
   // when selling fungible tokens back to the curve.
   entrypoint
-    calculate_sell_return : (int, Frac.frac) => Frac.frac // TODO: simplify to return int
-    calculate_sell_return(total_supply: int, sell_tokens: Frac.frac) : Frac.frac =
+    calculate_sell_return : (int, Frac.frac) => int
+    calculate_sell_return(total_supply: int, sell_tokens: Frac.frac) : int =
+
       let total_supply_frac = Frac.from_int(total_supply)
       // (sell_price() + sell_curve(total_supply - sell_tokens)) * sell_tokens / Frac.from_int(2)
-      Frac.div(
+      Frac.ceil(Frac.div(
         Frac.mul(
           (Frac.add( sell_price(total_supply)
                    , sell_curve(Frac.sub( total_supply_frac
                                         , sell_tokens))))
           , sell_tokens
-        ) , Frac.from_int(2))
+        ) , Frac.from_int(2)))
 
   // Buy curve formula
   entrypoint buy_curve(x: Frac.frac) : Frac.frac =
+    require(Frac.is_sane(x), "INVALID_FRAC_NUMBER")
     Frac.add(Frac.mul(x, state.alpha), state.init_buy_price)
 
   // Sell curve formula
   entrypoint sell_curve(x: Frac.frac) : Frac.frac =
+    require(Frac.is_sane(x), "INVALID_FRAC_NUMBER")
     Frac.sub(Frac.mul(x, state.alpha), state.init_sell_price)
-
-  // !!! IMPORTANT
-  // Add require to check if the Frac is sane
-  // everywhere where it is passed as argument
-  // require(Frac.is_sane(), "...");
