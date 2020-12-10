@@ -1,0 +1,19 @@
+@compiler >=4.2
+
+/**
+ * Linear Bonding Curve Interface
+ */
+contract IBondCurve =
+  // Returns the current buy price
+  entrypoint buy_price : (int) => int
+  
+  // Returns the current sell price
+  entrypoint sell_price : (int) => int
+  
+  // Returns the AE price for the desired amount
+  // of tokens to be bought from the curve.
+  entrypoint calculate_buy_price : (int, int) => int
+
+  // Returns the amount of AE tokens to be received back
+  // when selling fungible tokens back to the curve.
+  entrypoint calculate_sell_return : (int, int) => int
