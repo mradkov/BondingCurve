@@ -57,7 +57,6 @@ contract BondCurve =
     calculate_buy_price(total_supply: int, buy_tokens: int) : int =
       require(total_supply >= 0, "ERROR_TOTAL_SUPPLY_NEGATIVE")
       require(buy_tokens >= 0, "ERROR_BUY_TOKENS_NEGATIVE")
-      require(total_supply >= sell_tokens, "ERROR_SELL_INSUFFICIENT_TOTAL_SUPPLY")
       let buy_tokens_amount = Frac.from_int(buy_tokens)
       let total_supply_frac = Frac.from_int(total_supply)
       Frac.ceil(Frac.div(
