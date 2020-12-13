@@ -20,6 +20,7 @@
     "@aeternity/aepp-sdk": "^7.5.0",
     "aeproject-lib": "^2.2.0",
     "bignumber.js": "^9.0.0",
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "it-each": "^0.4.0"
   }
 }
