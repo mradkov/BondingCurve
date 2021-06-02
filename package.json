@@ -17,10 +17,14 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@aeternity/aepp-sdk": "^7.5.0",
-    "aeproject-lib": "^2.2.0",
+    "@aeternity/aepp-sdk": "8.1.0",
     "bignumber.js": "^9.0.0",
     "esm": "^3.2.25",
-    "it-each": "^0.4.0"
+    "it-each": "^0.4.0",
+    "prompts": "^2.4.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.4.0"
   }
 }
