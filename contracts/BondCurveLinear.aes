@@ -1,5 +1,6 @@
-@compiler >=4.2
+@compiler >= 5
 
+include "String.aes"
 include "Frac.aes"
 
 contract BondCurve =
@@ -13,14 +14,14 @@ contract BondCurve =
    *
    *  Adjust the second argument of Frac.make_frac()
    *  according to your fungible token decimals
-   *  
-   *  Example: 
+   *
+   *  Example:
    *  - Frac.make_frac(1, 1) would mean we are working with
    *  the lowest possible integers.
    *  - Frac.make_frac(1, 1000000000000000000) - this config
    *  would be suitable for working with fungible tokens
    *  with 18 decimals.
-   */ 
+   */
   function alpha() : Frac.frac = Frac.make_frac(1, 1)
 
   // Initial price for the buy curve
@@ -35,14 +36,14 @@ contract BondCurve =
     buy_price(0) = Frac.round(init_buy_price())
     buy_price(total_supply: int) : int =
       Frac.ceil(buy_curve(Frac.from_int(total_supply)))
-  
+
   // Returns the current sell price
   entrypoint
     sell_price : int => int
     sell_price(0) = Frac.round(init_sell_price())
     sell_price(total_supply: int) : int =
       Frac.ceil(sell_curve(Frac.from_int(total_supply)))
-  
+
   /**
    *  Calculate the AE price for amount of tokens to be bought
    *  based on the total supply of the corresponding FT.

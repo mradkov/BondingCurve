@@ -15,12 +15,14 @@
  *  PERFORMANCE OF THIS SOFTWARE.
  */
 
+const fs = require('fs');
+const assert = require('chai').assert
+
+const { defaultWallets: wallets } = require('../config/wallets.json');
+
 require('it-each')({ testPerIteration: true });
 const { Universal, MemoryAccount, Node } = require('@aeternity/aepp-sdk');
-const BONDING_CURVE_LINEAR_CONTRACT = utils.readFileRelative(
-  './contracts/BondCurveLinear.aes',
-  'utf-8',
-);
+const BONDING_CURVE_LINEAR_CONTRACT = fs.readFileSync('./contracts/BondCurveLinear.aes', 'utf-8',);
 const testData = require('./data');
 
 const config = {
@@ -51,7 +53,7 @@ describe('Bonding Curve Contract', () => {
   });
 
   it('Deploying Bond Contract', async () => {
-    contract = await client.getContractInstance(BONDING_CURVE_LINEAR_CONTRACT);
+    contract = await client.getContractInstance(BONDING_CURVE_LINEAR_CONTRACT).catch(console.error);
     const init = await contract.methods.init();
     assert.equal(init.result.returnType, 'ok');
   });

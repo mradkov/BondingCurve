@@ -1,11 +1,11 @@
-@compiler >=4.2
+@compiler >= 5
 
+include "String.aes"
 include "Frac.aes"
 include "Func.aes"
 include "Option.aes"
 include "List.aes"
 include "Pair.aes"
-
 
 namespace FracApprox =
 
@@ -29,7 +29,7 @@ namespace FracApprox =
         run_int_root(inv_base, -exp, error, Frac.from_int(0), ub)
 
   private function run_int_root(base : Frac.frac, exp : int, error : Frac.frac, lb : Frac.frac, ub : Frac.frac) =
-      
+
     let guess = Frac.div(Frac.add(lb, ub), Frac.from_int(2))
 
     // prediction of the guess
@@ -88,7 +88,7 @@ namespace BondingLib =
       Frac.from_int(int_part)
     else
       run_log_2(y0, 6, Frac.from_int(int_part), 0)
-    
+
   private function run_log_2(y1 : Frac.frac, it : int, acc : Frac.frac, squaring : int) : Frac.frac =
     if(it == 0)
       acc
@@ -145,7 +145,7 @@ payable contract BondingCurve =
 
   // contract with reserve ratio
   entrypoint ratio() = Frac.make_frac(1, 4)
-  
+
   // error used in approximations
   entrypoint error() = Frac.make_frac(1, 10000)
 
@@ -187,7 +187,7 @@ payable contract BondingCurve =
       let price = sell_price(amount)
       require( Option.match(true, (req) => price =< req, minimum)
               , "ASKED_TOO_LOW_PRICE")
-      
+
       require(Contract.balance >= price
               , "CONTRACT_BALANCE_ERROR_ACCUMULATED_APPROXIMATION_ERRORS")
       Chain.spend(Call.caller, price)
