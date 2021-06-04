@@ -15,14 +15,12 @@
  *  PERFORMANCE OF THIS SOFTWARE.
  */
 
-const fs = require('fs');
-const assert = require('chai').assert
-
-const { defaultWallets: wallets } = require('../config/wallets.json');
-
 require('it-each')({ testPerIteration: true });
 const { Universal, MemoryAccount, Node } = require('@aeternity/aepp-sdk');
-const BONDING_CURVE_LINEAR_CONTRACT = fs.readFileSync('./contracts/BondCurveLinear.aes', 'utf-8',);
+const BONDING_CURVE_STEP_CONTRACT = utils.readFileRelative(
+  './contracts/BondCurveStep.aes',
+  'utf-8',
+);
 const testData = require('./data');
 
 const config = {
@@ -31,7 +29,7 @@ const config = {
   compilerUrl: 'http://localhost:3080',
 };
 
-describe('Bonding Curve Contract', () => {
+describe('Bonding Curve Step Contract', () => {
   let client, contract;
 
   before(async () => {
@@ -53,51 +51,51 @@ describe('Bonding Curve Contract', () => {
   });
 
   it('Deploying Bond Contract', async () => {
-    contract = await client.getContractInstance(BONDING_CURVE_LINEAR_CONTRACT).catch(console.error);
+    contract = await client.getContractInstance(BONDING_CURVE_STEP_CONTRACT);
     const init = await contract.methods.init();
     assert.equal(init.result.returnType, 'ok');
   });
 
-  describe('Buy current price tests', () => {
-    it.each(
-      [...testData.linear],
-      'Should get buy price for supply %s',
-      ['element'],
-      (p, next) => {
-        contract.methods.buy_price(p.totalSupply).then((result) => {
-          assert.equal(
-            result.decodedResult,
-            p.totalSupply + 1,
-            `Buy price incorrect for supply: ${p.totalSupply}`,
-          );
-          next();
-        });
-      },
-    );
-  });
+  // describe('Buy current price tests', () => {
+  //   it.each(
+  //     [...testData.step],
+  //     'Should get buy price for supply',
+  //     ['element'],
+  //     (p, next) => {
+  //       contract.methods.buy_price(p.totalSupply).then((result) => {
+  //         assert.equal(
+  //           result.decodedResult,
+  //           p.totalSupply + 1,
+  //           `Buy price incorrect for supply: ${JSON.stringify(p)}`,
+  //         );
+  //         next();
+  //       });
+  //     },
+  //   );
+  // });
 
-  describe('Sell current price tests', () => {
-    it.each(
-      [...testData.linear],
-      'Should get sell price for supply %s',
-      ['element'],
-      (p, next) => {
-        contract.methods.sell_price(p.totalSupply).then((result) => {
-          assert.equal(
-            result.decodedResult,
-            p.totalSupply,
-            `Sell price incorrect for supply: ${p.totalSupply}`,
-          );
-          next();
-        });
-      },
-    );
-  });
+  // describe('Sell current price tests', () => {
+  //   it.each(
+  //     [...testData.step],
+  //     'Should get sell price for supply',
+  //     ['element'],
+  //     (p, next) => {
+  //       contract.methods.sell_price(p.totalSupply).then((result) => {
+  //         assert.equal(
+  //           result.decodedResult,
+  //           p.totalSupply,
+  //           `Sell price incorrect for supply: ${JSON.stringify(p)}`,
+  //         );
+  //         next();
+  //       });
+  //     },
+  //   );
+  // });
 
   describe('Calculate Buy price tests', () => {
     it.each(
-      [...testData.linear],
-      'Should calculate buy price for supply %s',
+      [...testData.step],
+      'Should calculate buy price for supply',
       ['element'],
       (p, next) => {
         contract.methods
@@ -106,7 +104,7 @@ describe('Bonding Curve Contract', () => {
             assert.equal(
               result.decodedResult,
               p.buy.aettos,
-              `Calculation for buy price incorrect for: supply=${p.totalSupply} buy_amount=${p.buy.amount}`,
+              `Calculation for buy price incorrect for: ${JSON.stringify(p)}`,
             );
             next();
           });
@@ -116,8 +114,8 @@ describe('Bonding Curve Contract', () => {
 
   describe('Sell price tests', () => {
     it.each(
-      [...testData.linear],
-      'Should calculate sell return for supply %s',
+      [...testData.step],
+      'Should calculate sell return for supply',
       ['element'],
       (p, next) => {
         if (p.totalSupply >= p.sell.amount) {
@@ -127,7 +125,9 @@ describe('Bonding Curve Contract', () => {
               assert.equal(
                 result.decodedResult,
                 p.sell.aettos,
-                `Calculation for sell price incorrect for: supply=${p.totalSupply} sell_amount=${p.sell.amount}`,
+                `Calculation for sell price incorrect for: ${JSON.stringify(
+                  p,
+                )}`,
               );
               next();
             });
@@ -138,7 +138,9 @@ describe('Bonding Curve Contract', () => {
               assert.equal(
                 result.decodedResult,
                 p.sell.aettos,
-                `Calculation for sell price incorrect for: supply=${p.totalSupply} sell_amount=${p.sell.amount}`,
+                `Calculation for sell price incorrect for: ${JSON.stringify(
+                  p,
+                )}`,
               );
               next();
             })

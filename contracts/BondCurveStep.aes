@@ -1,0 +1,108 @@
+@compiler >=4.2
+
+include "Frac.aes"
+
+contract BondCurveStep =
+
+  /**
+   *  Alpha here is used to define the step of the curve
+   *  and will determine the ratios for
+   *  the reserve and the spread
+   *
+   *  Adjust the second argument of Frac.make_frac()
+   *  according to your fungible token decimals
+   *  
+   *  Example: 
+   *  - Frac.make_frac(1, 1) would mean we are working with
+   *  the lowest possible integers.
+   *  - Frac.make_frac(1, 1000000000000000000) - this config
+   *  would be suitable for working with fungible tokens
+   *  with 18 decimals.
+   */ 
+  entrypoint alpha() : Frac.frac = Frac.make_frac(1, 1)
+
+  // Initial price for the buy curve
+  entrypoint init_buy_price() : Frac.frac = Frac.from_int(1)
+
+  // Initial price for the sell curve
+  entrypoint init_sell_price() : Frac.frac = Frac.from_int(0)
+
+  // Returns the current buy price
+  entrypoint
+    buy_price : int => int
+    buy_price(0) = Frac.round(init_buy_price())
+    buy_price(total_supply: int) : int =
+      Frac.ceil(buy_curve(Frac.from_int(total_supply)))
+  
+  // Returns the current sell price
+  entrypoint
+    sell_price : int => int
+    sell_price(0) = Frac.round(init_sell_price())
+    sell_price(total_supply: int) : int =
+      Frac.ceil(sell_curve(Frac.from_int(total_supply)))
+  
+  /**
+   *  Calculate the AE price for amount of tokens to be bought
+   *  based on the total supply of the corresponding FT.
+   *
+   *  Simplified equation to calculate the buy_price
+   *  given the current token supply (total_supply) and desired amount of
+   *  tokens to be acquired (buy_tokens):
+   *  (buy_price() + buy_curve(total_supply + buy_tokens)) * buy_tokens / 2
+   */
+  entrypoint
+    calculate_buy_price : (int, int) => int
+    calculate_buy_price(total_supply: int, buy_tokens: int) : int =
+      require(total_supply >= 0, "ERROR_TOTAL_SUPPLY_NEGATIVE")
+      require(buy_tokens >= 0, "ERROR_BUY_TOKENS_NEGATIVE")
+      let buy_tokens_amount = Frac.from_int(buy_tokens)
+      let total_supply_frac = Frac.from_int(total_supply)
+      Frac.ceil(Frac.div(
+        Frac.mul(
+          (Frac.add( Frac.from_int(buy_price(total_supply))
+                   , buy_curve(Frac.add( total_supply_frac
+                                       , buy_tokens_amount))))
+          , buy_tokens_amount
+        ) , Frac.from_int(2)))
+
+  /**
+   *  Returns the amount of AE tokens to be received
+   *  when selling fungible tokens back to the curve.
+   *
+   *  Simplified equation to calculate the return amount
+   *  given the current token supply (total_supply) and desired amount of
+   *  tokens to be sold back to the curve (sell_tokens):
+   *  (sell_price() + sell_curve(total_supply - sell_tokens)) * sell_tokens / 2
+   */
+  entrypoint
+    calculate_sell_return : (int, int) => int
+    calculate_sell_return(total_supply: int, sell_tokens: int) : int =
+      require(total_supply >= 0, "ERROR_TOTAL_SUPPLY_NEGATIVE")
+      require(sell_tokens >= 0, "ERROR_SELL_TOKENS_NEGATIVE")
+      require(total_supply >= sell_tokens, "ERROR_SELL_INSUFFICIENT_TOTAL_SUPPLY")
+      let sell_tokens_amount = Frac.from_int(sell_tokens)
+      let total_supply_frac = Frac.from_int(total_supply)
+      Frac.ceil(Frac.div(
+        Frac.mul(
+          (Frac.add( Frac.from_int(sell_price(total_supply))
+                   , sell_curve(Frac.sub( total_supply_frac
+                                        , sell_tokens_amount))))
+          , sell_tokens_amount
+        ) , Frac.from_int(2)))
+
+  // Step Buy curve formula
+  entrypoint buy_curve(x: Frac.frac) : Frac.frac =
+    require(Frac.is_sane(x), "INVALID_FRAC_NUMBER")
+    Frac.from_int(Frac.ceil(Frac.mul(x, alpha())))
+
+  // Step Sell curve formula
+  entrypoint sell_curve(x: Frac.frac) : Frac.frac =
+    require(Frac.is_sane(x), "INVALID_FRAC_NUMBER")
+    Frac.sub(
+      Frac.from_int(
+        Frac.floor(
+          Frac.mul( x
+                  , alpha() )
+        )
+      )
+      , Frac.from_int(1))
