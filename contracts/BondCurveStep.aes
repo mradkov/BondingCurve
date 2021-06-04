@@ -98,4 +98,11 @@ contract BondCurveStep =
   // Step Sell curve formula
   entrypoint sell_curve(x: Frac.frac) : Frac.frac =
     require(Frac.is_sane(x), "INVALID_FRAC_NUMBER")
-    Frac.from_int(Frac.floor(Frac.mul(x, alpha())))
+    Frac.sub(
+      Frac.from_int(
+        Frac.floor(
+          Frac.mul( x
+                  , alpha() )
+        )
+      )
+      , Frac.from_int(1))
